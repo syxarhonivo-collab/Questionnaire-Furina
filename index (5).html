@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Анкета наблюдателя</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Marck+Script&family=Playfair+Display:wght@700;900&family=Ruslan+Display&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --d: .28; /* уровень тревоги: стартует не с нуля, растёт до 1 (меняется из JS) */
+  --calm: #121416; --deep: #040506; --panel: #0a0b0c;
+  --bone: #d6dadd; --ash: #8c969d; --ice: #a9c0d0;
+  --bg: color-mix(in srgb, var(--calm), var(--deep) calc(var(--d) * 100%));
+  --ink: color-mix(in srgb, var(--bone), var(--ash) calc(var(--d) * 75%));
+  --line: color-mix(in srgb, #596166, #3c454a calc(var(--d) * 100%));
+  --sil: color-mix(in srgb, #b6bcc0, #8aa3b5 calc(var(--d) * 70%));
+  --hand: 'Caveat', 'Segoe Script', cursive;
+  --script: 'Marck Script', 'Segoe Script', cursive;
+  --goth: 'Ruslan Display', 'Playfair Display', Georgia, serif;
+  --black: 'UnifrakturCook', 'Playfair Display', serif;
+  --L: 1.9rem; /* высота строки на тетрадном листе */
+  --tex: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='560'><filter id='p' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='4' seed='9'/><feDiffuseLighting lighting-color='%23d9dcd9' surfaceScale='2.6'><feDistantLight azimuth='55' elevation='64'/></feDiffuseLighting></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+  --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='1.5 0 0 0 -.15 0 1.5 0 0 -.15 0 0 1.5 0 -.15 0 0 0 .85 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  /* ручное зачёркивание: три варианта каракулей */
+  --s1: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'><path d='M-2 12Q15 4 30 11T58 9T102 6M0 7Q20 15 45 9T100 14' fill='none' stroke='%230b121a' stroke-width='2.3' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+  --s2: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'><path d='M0 14L12 5L24 15L36 5L48 14L60 6L72 15L84 7L100 12' fill='none' stroke='%230b121a' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' vector-effect='non-scaling-stroke'/></svg>");
+  --s3: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'><path d='M0 10Q25 14 50 8T100 11M3 15Q40 3 97 9' fill='none' stroke='%230b121a' stroke-width='2.4' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+  /* ручное подчёркивание маркером */
+  --m1: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M0 6Q12 2 25 6T52 5T78 7T100 3' fill='none' stroke='%2328425a' stroke-opacity='.75' stroke-width='2.4' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+  --m2: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M0 4Q20 7 40 3T100 6M2 8Q30 4 60 8T98 5' fill='none' stroke='%2328425a' stroke-opacity='.75' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.4rem/1.45 var(--hand); overflow-x: hidden; transition: background-color 1.6s, color 1.6s;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+body.locked, body.reading { overflow: hidden; }
+::selection { background: rgba(140,170,195,.4); color: #fff; }
+main { position: relative; z-index: 2; max-width: 64rem; margin: 0 auto; padding: 0 1rem 5rem; }
+main, nav { transition: opacity .9s, visibility 0s; }
+body.reading main, body.reading nav { opacity: 0; visibility: hidden; transition: opacity .9s, visibility 0s .9s; }
+
+/* Тёмный лес на фоне */
+.forest { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: #0a0c0d; }
+.forest.photo { background-size: cover; background-position: center; }
+.forest svg { display: block; width: 100%; height: 100%; }
+.forest::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0, calc(.38 + var(--d) * .42)); }
+.fog { position: fixed; inset: -10% -30%; z-index: 0; pointer-events: none; opacity: calc(.55 - var(--d) * .25); will-change: transform; animation: drift 48s ease-in-out infinite alternate;
+  background: radial-gradient(ellipse 40% 18% at 30% 60%, rgba(190,205,212,.35), transparent 70%), radial-gradient(ellipse 45% 16% at 75% 72%, rgba(190,205,212,.28), transparent 70%), radial-gradient(ellipse 35% 14% at 55% 40%, rgba(190,205,212,.22), transparent 70%); }
+@keyframes drift { to { transform: translateX(12%); } }
+#glc { opacity: calc(1 - var(--d) * .85); }
+#fg .e { fill: #e3edf2; }
+
+/* Атмосфера: лёгкие фиксированные слои */
+.vig, .grain, .glow { position: fixed; pointer-events: none; }
+.vig { inset: 0; z-index: 200; transform: translateZ(0);
+  background: radial-gradient(ellipse 85% 80% at 50% 48%, transparent calc(38% - var(--d) * 16%), rgba(0,0,0,.55) calc(72% - var(--d) * 8%), rgba(0,0,0, calc(.93 + var(--d) * .07)) 100%);
+  animation: beat calc(2.8s - var(--d) * 1.5s) infinite; }
+body.deep .vig { animation: beat2 8s infinite; }
+@keyframes beat { 0%,100% { opacity: 1 } 12% { opacity: .84 } 24% { opacity: 1 } 36% { opacity: .92 } }
+@keyframes beat2 { 0%,100% { opacity: 1 } 6% { opacity: .86 } 12% { opacity: 1 } 80% { opacity: 1 } 82% { opacity: .55 } 84% { opacity: .92 } 86% { opacity: .62 } 88% { opacity: 1 } }
+.grain { inset: -30%; z-index: 199; opacity: calc(.28 + var(--d) * .16); background-image: var(--noise); will-change: transform; animation: gr .5s steps(1) infinite; }
+@keyframes gr { 0% { transform: translate(0,0) } 20% { transform: translate(-4%,3%) } 40% { transform: translate(3%,-5%) } 60% { transform: translate(-5%,-2%) } 80% { transform: translate(4%,4%) } }
+.glow { inset: 0; z-index: 0; opacity: calc(.2 + var(--d) * .4);
+  background: radial-gradient(circle at 10% 90%, rgba(62,84,100,.55) 0, transparent 46%), radial-gradient(circle at 92% 12%, rgba(48,64,78,.5) 0, transparent 42%); }
+
+/* Рамки: углы, узор сверху, «крылья» снизу */
+.o { position: absolute; color: var(--sil); fill: none; stroke: currentColor; stroke-width: 1.1; pointer-events: none; overflow: visible; }
+.c { width: 40px; height: 40px; }
+.tl { top: 6px; left: 6px; } .tr { top: 6px; right: 6px; transform: scaleX(-1); }
+.bl { bottom: 6px; left: 6px; transform: scaleY(-1); } .br { bottom: 6px; right: 6px; transform: scale(-1); }
+.top { top: -13px; left: 50%; width: 84px; height: 26px; margin-left: -42px; background: var(--panel); padding: 0 6px; }
+.bot { bottom: -14px; left: 50%; width: 120px; height: 30px; margin-left: -60px; background: var(--panel); padding: 0 6px; }
+.fr { position: relative; background: var(--panel); border: 1px solid var(--sil);
+  box-shadow: inset 0 0 0 6px var(--panel), inset 0 0 0 7px color-mix(in srgb, var(--sil), transparent 45%), 0 12px 30px rgba(0,0,0,.7); }
+.fr > :not(.o) { position: relative; }
+
+/* Навигация */
+nav { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: center; gap: clamp(.7rem, 4vw, 2rem);
+  padding: .6rem .8rem; background: rgba(5,6,7,.92); border-bottom: 1px solid var(--line); }
+nav a, nav button { color: inherit; background: none; border: 0; cursor: pointer; text-decoration: none; font: 700 .9rem var(--goth); letter-spacing: .05em; opacity: .8; padding: .35rem .2rem; }
+nav a:hover, nav button:hover { opacity: 1; color: var(--ice); }
+:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+#count { font: 400 1.1rem var(--hand); opacity: .75; display: flex; align-items: center; gap: .4rem; }
+#count::before { content: ''; width: .5rem; height: .5rem; border-radius: 50%; background: var(--ice); box-shadow: 0 0 9px var(--ice); animation: pulse calc(3.2s - var(--d) * 2.2s) infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* Шапка */
+header { max-width: 34rem; margin: 3rem auto 4rem; padding: 3rem 1.6rem 3.2rem; text-align: center; }
+.spark { color: var(--sil); letter-spacing: .5em; font-size: .85rem; }
+h1 { margin: .7rem 0 .2rem; font: 400 clamp(2.2rem, 10vw, 3.4rem)/1.05 var(--goth); color: var(--bone); text-shadow: 0 0 calc(8px + var(--d) * 18px) rgba(130,165,190,.5); }
+.handle { font: 400 1.15rem var(--script); color: #7d8588; }
+.pills { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; margin: 1.1rem 0 .4rem; }
+.pills i { position: relative; font-style: normal; font-size: 1.1rem; padding: .25rem .8rem; border: 1px solid var(--line); border-radius: 12px; }
+.pills i::before, .pills i::after { content: '✦'; position: absolute; top: 50%; transform: translateY(-50%); font-size: .55rem; color: var(--sil); background: var(--panel); padding: 2px 0; }
+.pills i::before { left: -5px; } .pills i::after { right: -5px; }
+.pills u { text-decoration: none; font-weight: 700; color: var(--bone); }
+.lead { margin: 1rem auto 0; max-width: 26rem; font-size: 1.45rem; opacity: .85; }
+.bar { position: relative; display: block; margin: 1.2rem auto 0; width: 100%; max-width: 19rem; padding: .6rem 1rem; text-align: center; text-decoration: none; color: var(--bone);
+  font: 400 1.3rem var(--goth); border: 1px solid var(--sil); border-radius: 14px; box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 4px color-mix(in srgb, var(--sil), transparent 50%); transition: background .3s; }
+a.bar:hover, .card:hover .bar { background: rgba(150,175,195,.16); }
+
+/* Плашки */
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.8rem; }
+.cards li:nth-child(odd) { transform: rotate(-.6deg); margin-right: 3%; }
+.cards li:nth-child(even) { transform: rotate(.6deg); margin-left: 3%; }
+.card { --k: 0; width: 100%; display: block; text-align: center; cursor: pointer; font: inherit; color: inherit; padding: 2.6rem 1.1rem 2.4rem; transition: transform .4s, opacity .5s, box-shadow .4s; }
+.emb { display: grid; place-items: center; width: 3.7rem; height: 3.7rem; margin: 0 auto .6rem; border-radius: 50%; border: 1px solid var(--sil);
+  box-shadow: inset 0 0 0 4px var(--panel), inset 0 0 0 5px color-mix(in srgb, var(--sil), transparent 50%), 0 0 22px rgba(150,185,210, calc(.05 + var(--k) * .22)); font: 700 1.8rem/1 var(--black); color: var(--bone); }
+.card b { display: block; font: 400 1.65rem/1.1 var(--goth); color: var(--bone); }
+.card .s { display: block; margin-top: .3rem; font: 400 1.15rem var(--script); color: var(--ice); }
+.card .h { display: block; margin: .6rem 0 .2rem; opacity: .75; }
+.card:hover, .card:focus-visible { transform: scale(1.02); box-shadow: inset 0 0 0 6px var(--panel), inset 0 0 0 7px var(--ice), 0 0 36px rgba(150,185,210,.25); }
+.card.far { opacity: .55; }
+.card.seen .emb { border-style: dashed; }
+
+/* Страница чтения */
+.page { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; visibility: hidden; transition: opacity .9s, visibility 0s .9s; -webkit-user-select: text; user-select: text; }
+.page.on { opacity: 1; visibility: visible; transition: opacity .9s; }
+.pbar { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .9rem; background: linear-gradient(rgba(2,3,4,.94), rgba(2,3,4,.6)); border-bottom: 1px solid var(--line); }
+#ptitle { font: 400 1.2rem var(--goth); color: var(--bone); }
+#pinfo { font: 700 1.15rem var(--hand); color: var(--bone); opacity: .85; white-space: nowrap; }
+.stage { flex: 1; min-height: 0; display: flex; justify-content: center; padding: .8rem .7rem .5rem; animation: jolt calc(9s - var(--d) * 5.5s) infinite; }
+@keyframes jolt { 0%,92%,100% { transform: none } 93% { transform: translate(-4px,2px) } 94% { transform: translate(5px,-3px) skewX(.6deg) } 95% { transform: translate(-2px,1px) } 96% { transform: none } }
+.pfoot { display: flex; gap: .6rem; justify-content: center; padding: .55rem .8rem calc(.7rem + env(safe-area-inset-bottom)); background: linear-gradient(rgba(2,3,4,.6), rgba(2,3,4,.94)); border-top: 1px solid var(--line); }
+.btn { flex: 1; max-width: 11rem; min-height: 44px; background: rgba(0,0,0,.35); color: var(--bone); font: 700 1.2rem var(--hand); cursor: pointer; border: 1px solid var(--line); border-radius: 10px; padding: .3rem .8rem; transition: background .3s, border-color .3s; }
+.btn:hover { background: rgba(150,175,195,.16); border-color: var(--ice); }
+.btn:disabled { opacity: .28; pointer-events: none; }
+
+/* Тетрадный лист */
+.sheetw { display: flex; width: min(100%, 34rem); filter: drop-shadow(0 10px 18px rgba(0,0,0,.85)); transform-origin: 50% 100%; }
+.sheetw.flip { animation: slip .5s ease-out; }
+.sheetw.flip .sheet { animation: soft .6s ease-out; }
+@keyframes slip { 0% { opacity: 0; transform: translateX(18px) rotate(1.2deg) } 100% { opacity: 1; transform: none } }
+@keyframes soft { 0% { filter: blur(4px) } 100% { filter: blur(0) } }
+.sheet { position: relative; flex: 1; min-width: 0; padding: var(--L) .9rem 0 3rem;
+  background:
+    radial-gradient(circle at 1.15rem 12%, #050607 0 .5rem, rgba(0,0,0,.4) .52rem .68rem, transparent .72rem),
+    radial-gradient(circle at 1.15rem 50%, #050607 0 .5rem, rgba(0,0,0,.4) .52rem .68rem, transparent .72rem),
+    radial-gradient(circle at 1.15rem 88%, #050607 0 .5rem, rgba(0,0,0,.4) .52rem .68rem, transparent .72rem),
+    linear-gradient(90deg, transparent 2.45rem, rgba(95,118,142,.6) 2.45rem calc(2.45rem + 1.5px), transparent calc(2.45rem + 1.5px)),
+    linear-gradient(to bottom, transparent calc(100% - 1.5px), rgba(92,118,148,.42) 0) 0 var(--L)/100% var(--L) repeat-y,
+    var(--tex) 0 0/100% 100%; }
+.sheet::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 38%, transparent 35%, rgba(5,9,14,.5) 100%), linear-gradient(rgba(8,14,20, calc(.08 + var(--d) * .3)), rgba(8,14,20, calc(.08 + var(--d) * .3))); }
+.txt { position: relative; z-index: 1; font: 400 1.55rem/var(--L) var(--hand); color: #0b121a; overflow: hidden; filter: blur(.3px); animation: hunt 11s infinite; }
+.probe { position: absolute; left: -9999px; top: 0; visibility: hidden; pointer-events: none; height: auto !important; overflow: visible; animation: none; filter: none; }
+@keyframes hunt { 0%,86%,100% { filter: blur(.3px) } 89% { filter: blur(2.4px) } 92% { filter: blur(.3px) } 95% { filter: blur(1.4px) } 97% { filter: blur(.3px) } }
+.txt p { margin: 0; text-indent: 1.5rem; }
+.txt p.cont { text-indent: 0; }
+.txt span { position: relative; }
+.txt h2 { margin: 0; font: 400 2.1rem/calc(var(--L) * 2) var(--script); text-decoration: underline double; text-underline-offset: .28em; }
+.txt p.w { text-indent: 0; font: 400 1.75rem/var(--L) var(--script); color: #08131c; transform: rotate(-.8deg); }
+.txt mark { color: inherit; background: var(--m1) bottom/100% .55em no-repeat, linear-gradient(transparent 55%, rgba(40,62,78,.16) 55%); }
+.txt mark.b { background: var(--m2) bottom/100% .6em no-repeat, linear-gradient(transparent 55%, rgba(40,62,78,.16) 55%); }
+.txt s { text-decoration: none; opacity: .78; background: var(--s1) center/100% 100% no-repeat; }
+.txt s.b { background-image: var(--s2); } .txt s.c { background-image: var(--s3); }
+.txt mark, .txt s { position: relative; animation: jit 6s infinite; }
+@keyframes jit { 0%,90%,100% { left: 0; top: 0 } 92% { left: -2px; top: 1px } 94% { left: 2px; top: -1px } 96% { left: -1px; top: 0 } }
+.rv { opacity: 0; animation: fade 1.4s ease forwards; }
+.txt p.w.rv { animation: fade 1.6s ease forwards, jit 5s infinite; }
+@keyframes fade { to { opacity: 1; } }
+
+/* Рисунки и надписи на листе: как будто их нацарапали на фоне */
+.dd { position: absolute; z-index: 0; pointer-events: none; color: #0b121a; opacity: 0; transform: rotate(var(--r, 0deg)); animation: ddin 1.6s 1.4s ease forwards; }
+@keyframes ddin { to { opacity: calc(.3 + var(--d) * .3); } }
+.dd svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dd path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.dr { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 2.6s 1.5s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.dd.eyes { width: 7.5rem; } .dd.figure { width: 5rem; } .dd.stone { width: 5.5rem; } .dd.tally { width: 6.5rem; } .dd.spiral { width: 3.6rem; }
+.dd.ph { max-width: 72%; font: 400 min(2.5rem, 9.5vw)/1.05 var(--goth); text-align: center; filter: url(#rough); text-shadow: 1px 1px 0 currentColor, -1px 0 0 currentColor; }
+.ph b { font-weight: 400; white-space: nowrap; display: inline-block; }
+.ph i { font-style: normal; display: inline-block; opacity: 0; animation: fade .05s forwards; }
+
+/* Чужие заметки: рваные обрывки */
+#notes { margin-top: 6rem; }
+#notes h2 { font: 400 2rem var(--goth); text-align: center; margin: 0 0 2rem; color: var(--bone); }
+.scraps { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6rem; }
+.scw { filter: drop-shadow(0 8px 14px rgba(0,0,0,.8)); }
+.scw:nth-child(1) { transform: rotate(-3deg); } .scw:nth-child(2) { transform: rotate(2deg) translateY(1rem); } .scw:nth-child(3) { transform: rotate(-1.5deg); }
+.scrap { --L: 1.9rem; margin: 0; max-width: 14.5rem; padding: 1.3rem 1.3rem 1.1rem; font: 400 1.45rem/var(--L) var(--hand); color: #0b121a;
+  background: linear-gradient(to bottom, transparent calc(100% - 1.5px), rgba(92,118,148,.4) 0) 0 1.3rem/100% var(--L) repeat-y, var(--tex) 0 0/100% 100%; }
+.meter { margin: 3.5rem 0 0; text-align: center; opacity: .5; }
+
+/* Заставка */
+.gate { position: fixed; inset: 0; z-index: 100; border: 0; width: 100%; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+  background: radial-gradient(circle at 50% 50%, rgba(16,22,28,.92) 0, rgba(0,0,0,.98) 70%), #000; color: var(--bone); transition: opacity 1.6s;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.gate.out { opacity: 0; pointer-events: none; }
+.gate.gone { display: none; }
+.phrase { display: block; padding: .3em .4em; text-align: center; white-space: nowrap; font: 400 clamp(2.6rem, 13vw, 7rem)/1.5 var(--script); }
+.phrase span { opacity: 0; animation: ink .8s ease-out forwards; }
+@keyframes ink { 0% { opacity: 0; text-shadow: 0 0 0 transparent; } 55% { opacity: 1; text-shadow: 0 0 40px rgba(170,205,230,.95); } 100% { opacity: 1; text-shadow: 0 0 18px rgba(140,175,200,.55); } }
+.enter { font: 400 1.5rem var(--hand); letter-spacing: .15em; opacity: 0; animation: show 2s forwards; }
+@keyframes show { to { opacity: .6; } }
+body.in main { animation: fade2 2.2s ease backwards; }
+@keyframes fade2 { from { opacity: 0; } }
+
+@media (min-width: 760px) {
+  .cards { grid-template-columns: 1fr 1fr; gap: 3.2rem 2.4rem; }
+  .cards li { margin: 0 !important; }
+  .cards li:nth-child(even) { margin-top: 3.4rem !important; }
+}
+@media (max-width: 480px) {
+  body { font-size: 1.3rem; }
+  nav { gap: .7rem; padding: .5rem .6rem; }
+  nav a, nav button { font-size: .82rem; }
+  nav a[href="#top"] { display: none; }
+  header { margin: 2rem auto 3rem; padding: 2.8rem 1.1rem 3rem; }
+  .card { padding: 2.5rem .9rem 2.3rem; }
+  main { padding: 0 .8rem 4.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .phrase span, .enter, .rv, .ph i { animation: none; opacity: 1; }
+  .dd { animation: none; opacity: .4; } .dr { animation: none; stroke-dashoffset: 0; }
+  .vig, body.deep .vig, .grain, .fog, .stage, .txt, .txt mark, .txt s, .txt p.w.rv, body.in main, #count::before, .sheetw.flip, .sheetw.flip .sheet { animation: none; }
+  .page, .page.on { transition: none; }
+}
+</style>
+</head>
+<body class="locked">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4"/></filter>
+  <symbol id="corner" viewBox="0 0 60 60"><path d="M8 54V20Q8 8 20 8H54M14 14Q27 14 27 25Q27 33 19 31Q14 29 17 25M30 8Q37 15 46 8M8 30Q15 37 8 46"/><path d="M7 2L12 7L7 12L2 7Z" fill="currentColor"/></symbol>
+  <symbol id="fleuron" viewBox="0 0 120 36"><path d="M44 18H22Q12 18 7 9M76 18H98Q108 18 113 9"/><path d="M60 3L64 15L76 18L64 21L60 33L56 21L44 18L56 15Z" fill="currentColor"/></symbol>
+  <symbol id="wings" viewBox="0 0 160 40"><path d="M74 20Q60 6 36 10Q44 14 40 20Q30 16 22 22Q32 24 30 30Q22 28 14 36Q50 38 74 22M86 20Q100 6 124 10Q116 14 120 20Q130 16 138 22Q128 24 130 30Q138 28 146 36Q110 38 86 22"/><path d="M80 6L86 20L80 34L74 20Z" fill="currentColor"/></symbol>
+</svg>
+
+<div class="forest" id="forest"></div><div class="fog"></div><div class="glow"></div><div class="grain"></div><div class="vig"></div>
+
+<button class="gate" id="gate" aria-label="Войти на страницу">
+  <span class="phrase" id="phrase" aria-hidden="true"></span>
+  <span class="enter" id="enter">войти</span>
+</button>
+
+<nav>
+  <a href="#top">Начало</a>
+  <a href="#cards">Записи</a>
+  <a href="#notes">Заметки</a>
+  <button id="exit" type="button">Выйти</button>
+  <span id="count" aria-label="Прочитано">0/6</span>
+</nav>
+
+<main id="top">
+  <header class="fr" id="hero">
+    <div class="spark" aria-hidden="true">✦ ✦ ✦</div>
+    <h1>Анкета наблюдателя</h1>
+    <div class="handle">@они_смотрят</div>
+    <div class="pills"><i><u>6</u> записей</i><i><u>0</u> выходов</i><i><u>1</u> гость</i></div>
+    <p class="lead">Вы уже заполняли эту анкету. Ответы сохранились. Читайте по порядку и не оборачивайтесь.</p>
+    <a class="bar" href="#cards">Начать читать</a>
+  </header>
+
+  <ul class="cards" id="cards"></ul>
+
+  <section id="notes">
+    <h2>Чужие заметки</h2>
+    <div class="scraps">
+      <div class="scw"><p class="scrap">Не считайте ступени. Я считала и перестала.</p></div>
+      <div class="scw"><p class="scrap">Дверь вела обратно в прихожую. Все четыре раза.</p></div>
+      <div class="scw"><p class="scrap">Если услышите своё имя, не отвечайте. Я ответила.</p></div>
+    </div>
+  </section>
+  <p class="meter" id="meter"></p>
+</main>
+
+<!-- Страница чтения: тетрадный лист, текст листается -->
+<div class="page" id="page" tabindex="-1" aria-live="polite">
+  <div class="pbar"><span id="ptitle"></span><span id="pinfo"></span></div>
+  <div class="stage" id="stage"><div class="sheetw" id="sheetw"><div class="sheet" id="sheet"><div class="txt" id="txt"></div></div></div></div>
+  <div class="pfoot"><button class="btn" id="prev" type="button">‹ Лист</button><button class="btn" id="back" type="button">К записям</button><button class="btn" id="next" type="button">Лист ›</button></div>
+</div>
+<div class="txt probe" id="probe" aria-hidden="true"></div>
+
+<script>
+/* ===== ТЕКСТЫ: меняйте здесь =====
+   Пишите сколько угодно абзацев в text: сайт сам разобьёт их на листы нужного размера.
+   *слово* — подчёркнуто от руки, ~слово~ — зачёркнуто каракулями (как будто автор передумала),
+   { whisper: '...' } — отдельная строка другим почерком.
+   stats — три «пилюли» на плашке: [число, подпись]. */
+const entries = [
+  { title: 'Прибытие', hint: 'Дом на Заречной, 14', scrawl: 'дверь была открыта',
+    stats: [['14', 'дом'], ['1', 'гость'], ['0', 'выходов']],
+    text: ['~Я приехала~ Вы приехали в четверг, около шести. Ключ лежал под ~третьим~ *четвёртым* кирпичом слева от крыльца.',
+           'В доме было тепло. Это странно: печь не топили с осени.',
+           { whisper: 'Я приехала раньше. Я точно приехала раньше.' }] },
+  { title: 'Соседи', hint: 'Они вежливы', scrawl: 'она смотрит в коридор',
+    stats: [['1', 'банка'], ['1', 'взгляд'], ['0', 'слов']],
+    text: ['Соседка слева приходит с банкой варенья. Она не заходит и смотрит поверх вашего плеча.',
+           'Она спрашивает: «Вы уже слышали, как *он ходит*?» Вы отвечаете, что живёте ~одна~ один.',
+           'Она кивает, как будто это и есть ответ.'] },
+  { title: 'Первая ночь', hint: 'Запишите, что услышали', scrawl: 'их было одиннадцать',
+    stats: [['2', 'часа ночи'], ['11', 'шагов'], ['10', 'ступеней']],
+    text: ['В два часа ночи заскрипела лестница. Ступени считают шаги, а не вес.',
+           'Вы насчитали *одиннадцать*. В доме всего десять ступеней.',
+           '~Я~ Вы лежали и не двигались. Шаги остановились у двери спальни и стояли там долго, дольше, чем бывает у живого человека. Под дверью не появилось ни полоски света, хотя в коридоре горела лампа.',
+           'Утром вы нашли на полу у порога немного земли. Она была ещё влажной.',
+           { whisper: 'Одиннадцатая — для того, кто идёт следом.' }] },
+  { title: 'Подвал', hint: 'Дверь не была заперта', scrawl: 'внизу кто-то дышит',
+    stats: [['1', 'дверь'], ['9', 'отметок'], ['0', 'света']],
+    text: ['Дверь в подвал открыта, хотя вы закрывали её дважды. Внизу пахнет сырой землёй и воском.',
+           'На стене отметки. Это не календарь, это *рост*: от колена до самого потолка, и каждая выше предыдущей.',
+           'Вы спускаетесь на три ступени и останавливаетесь. ~Я дошла до самого низа.~ Внизу кто-то тихо, ровно дышит. Вы слушаете и понимаете, что дышит он в такт вам.',
+           { whisper: 'Последняя отметка сделана сегодня.' }] },
+  { title: 'Зеркало', hint: 'Не смотрите слишком долго', scrawl: 'оно не моргает',
+    stats: [['1', 'зеркало'], ['0.3', 'секунды'], ['2', 'вас']],
+    text: ['В прихожей висит зеркало в тёмной раме. Вы повесили его сами, но не помните, когда.',
+           'Отражение запаздывает на долю вдоха. Потом вы замечаете, что оно перестало повторять и начало *ждать*. ~Мне показалось, оно улыбнулось.~',
+           { whisper: 'Оно ждёт, когда вы отвернётесь.' }] },
+  { title: 'Вы', hint: 'Последняя запись анкеты', scrawl: 'оглянись',
+    stats: [['6', 'из 6'], ['1', 'наблюдатель'], ['∞', 'осталось']],
+    text: ['Вы дочитали до конца. Хорошо. Он тоже следил за вами *по строчкам*.',
+           'В графе «наблюдатель» стоит ваше имя. ~Моё.~ Чернила ещё не высохли.',
+           { whisper: 'Не оборачивайтесь. Просто закройте страницу. Он уже закрыл дверь.' }] }
+];
+
+/* Нацарапанные фразы (всё в женском роде, где это нужно). Добавляйте свои. */
+const PHRASES = ['Оставь меня одну!', 'Помоги мне', 'Где ты?', 'Я заблудилась', 'Я видела его', 'Не смотри на меня', 'Я не одна', 'Выпусти меня',
+  'Я слышала шаги', 'Я устала бояться', 'Не оборачивайся', 'Он знает, что я здесь', 'Не уходи!', 'Я всё ещё здесь'];
+
+/* Свой лес: положите фото рядом с index.html и впишите имя файла, например 'forest.jpg'.
+   Пусто — лес рисуется кодом. */
+const FOREST_IMG = '';
+
+const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const rng = seed => { let s = (Math.abs(seed) % 2147483646) + 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+const cards = $('cards'), meter = $('meter'), count = $('count'), page = $('page'), stage = $('stage'),
+      sheetw = $('sheetw'), sheet = $('sheet'), txt = $('txt'), probe = $('probe');
+const seen = new Set();
+let deepest = -1, curEntry = -1, cur = 0, pages = [], lastSig = '';
+const dread = () => 0.28 + 0.72 * ((deepest + 1) / entries.length);
+
+/* ===== Лес и силуэты ===== */
+const FIG = {
+  stand: [50, 220, '<ellipse cx="50" cy="24" rx="11" ry="15"/><path d="M36 42Q50 36 64 42L67 128L61 130L59 220L52 220L50 150L48 220L41 220L39 130L33 128Z"/><path d="M36 44L24 138L30 140L38 70ZM64 44L76 138L70 140L62 70Z"/><circle class="e" cx="46" cy="23" r="1.7"/><circle class="e" cx="54" cy="23" r="1.7"/>'],
+  tilt: [50, 220, '<g transform="rotate(62 50 40)"><ellipse cx="50" cy="24" rx="11" ry="15"/><circle class="e" cx="46" cy="23" r="1.7"/><circle class="e" cx="54" cy="23" r="1.7"/></g><path d="M36 42Q50 36 64 42L67 128L61 130L59 220L52 220L50 150L48 220L41 220L39 130L33 128Z"/><path d="M36 44L24 138L30 140L38 70ZM64 44L76 138L70 140L62 70Z"/>'],
+  bent: [50, 220, '<path d="M40 128L38 220L46 220L50 150L54 220L62 220L60 128Z"/><g transform="rotate(78 50 130)"><path d="M34 128Q50 38 66 128Z"/><ellipse cx="50" cy="30" rx="11" ry="15"/><path d="M36 60L26 150L32 152L40 80ZM64 60L74 150L68 152L60 80Z"/><circle class="e" cx="46" cy="29" r="1.7"/><circle class="e" cx="54" cy="29" r="1.7"/></g>'],
+  lie: [115, 100, '<ellipse cx="22" cy="62" rx="14" ry="11"/><path d="M34 54Q80 44 130 56L205 64L205 80L130 74Q80 80 34 72Z"/><path d="M205 64L220 42L227 47L214 74Z"/><path d="M60 70L70 96L78 94L74 72Z"/><circle class="e" cx="20" cy="60" r="1.6"/><circle class="e" cx="27" cy="60" r="1.6"/>'],
+  crouch: [50, 220, '<ellipse cx="46" cy="118" rx="12" ry="14"/><path d="M18 220Q4 150 40 128Q78 118 84 150Q92 190 80 220Z"/><path d="M40 134Q22 170 34 214L42 214Q34 176 50 150Z"/><circle class="e" cx="42" cy="117" r="1.7"/><circle class="e" cx="50" cy="117" r="1.7"/>']
+};
+function buildForest() {
+  const host = $('forest'), W = 1200, H = 1000, r = rng(11);
+  const layer = (n, fill, op, w0, w1, br, bw) => {
+    let g = `<g fill="${fill}" opacity="${op}" stroke="${fill}" stroke-linecap="round">`;
+    for (let i = 0; i < n; i++) {
+      const x = (i + r()) * W / n, w = w0 + r() * (w1 - w0), lean = (r() - .5) * 36;
+      g += `<path stroke="none" d="M${(x - w / 2).toFixed(0)} ${H}L${(x - w * .36 + lean).toFixed(0)} -10L${(x + w * .36 + lean).toFixed(0)} -10L${(x + w / 2).toFixed(0)} ${H}Z"/>`;
+      for (let k = 0; k < br; k++) {
+        const y = 80 + r() * 720, dir = r() < .5 ? -1 : 1, len = 60 + r() * 150, bx = x + lean * (1 - y / H);
+        g += `<path fill="none" stroke-width="${bw}" d="M${bx.toFixed(0)} ${y.toFixed(0)}q${(dir * len * .5).toFixed(0)} ${(-len * .3).toFixed(0)} ${(dir * len).toFixed(0)} ${(-len * (.5 + r() * .6)).toFixed(0)}"/>`;
+      }
+    }
+    return g + '</g>';
+  };
+  let ground = 'M0 1000V945', x = 0;
+  for (; x <= W; x += 16) ground += `L${x} ${(925 + r() * 45).toFixed(0)}`;
+  const defs = Object.entries(FIG).map(([k, f]) => `<g id="f_${k}">${f[2]}</g>`).join('');
+  const trees = FOREST_IMG ? '' :
+    `<rect width="${W}" height="${H}" fill="url(#sk)"/><circle id="glc" cx="380" cy="400" r="240" fill="url(#gl)"/>` +
+    layer(20, '#3a4448', .45, 14, 26, 0, 1.5);
+  const near = FOREST_IMG ? '' : layer(13, '#161b1e', .85, 26, 48, 3, 2) + layer(7, '#040506', 1, 60, 110, 4, 3) + `<path fill="#030405" d="${ground}L${W} 1000Z"/>`;
+  if (FOREST_IMG) { host.style.backgroundImage = `url(${FOREST_IMG})`; host.classList.add('photo'); }
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs>
+    <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171c1f"/><stop offset=".5" stop-color="#3a4448"/><stop offset=".78" stop-color="#1b2124"/><stop offset="1" stop-color="#050607"/></linearGradient>
+    <radialGradient id="gl"><stop offset="0" stop-color="#e5eef2" stop-opacity=".7"/><stop offset="1" stop-color="#e5eef2" stop-opacity="0"/></radialGradient>${defs}</defs>
+    ${trees}<g id="fg" fill="#010203" opacity="0"></g>${near}</svg>`;
+}
+buildForest();
+
+/* Редкие силуэты: появляются медленно и пропадают рывком */
+let figOn = false;
+function spawn() {
+  const fg = $('fg'), d = dread();
+  if (!fg || document.hidden) return later();
+  const k = Object.keys(FIG)[Math.random() * 5 | 0], f = FIG[k];
+  const sc = Math.max(innerWidth / 1200, innerHeight / 1000), vis = innerWidth / sc, x0 = (1200 - vis) / 2;
+  let x = x0 + vis * (.12 + Math.random() * .76), y = 890 + Math.random() * 70, s = (1.2 + Math.random() * .5) * (1 + d * .35);
+  const put = () => fg.innerHTML = `<use href="#f_${k}" transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${s.toFixed(2)}) translate(${-f[0]} ${-f[1]})"/>`;
+  put(); fg.style.transition = 'none'; fg.style.opacity = 0; void fg.getBoundingClientRect();
+  fg.style.transition = 'opacity 3.2s'; fg.style.opacity = .88;
+  setTimeout(() => {
+    if (d > .45 && Math.random() < .5) { s *= 1.35; x += (x0 + vis / 2 - x) * .3; put(); } /* рывок ближе */
+    setTimeout(() => { fg.style.transition = 'none'; fg.style.opacity = 0; later(); }, 1000 + Math.random() * 3500);
+  }, 3500 + Math.random() * 3500);
+}
+function later() { setTimeout(spawn, 55000 - dread() * 30000 + Math.random() * 40000); }
+function startFigures() {
+  if (figOn || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  figOn = true; setTimeout(spawn, 16000);
+}
+
+/* ===== Рваный край, рамки, заставка ===== */
+function tear(seed, a, step = 6, stepL = 1.6) {
+  const rnd = rng(seed), P = [];
+  for (let v = 0; v <= 100; v += step) P.push(`${v}% ${(rnd() * a.t).toFixed(2)}%`);
+  for (let v = 0; v <= 100; v += step) P.push(`${(100 - rnd() * a.r).toFixed(2)}% ${v}%`);
+  for (let v = 100; v >= 0; v -= step) P.push(`${v}% ${(100 - rnd() * a.b).toFixed(2)}%`);
+  for (let v = 100; v >= 0; v -= stepL) P.push(`${(rnd() * a.l).toFixed(2)}% ${v.toFixed(1)}%`);
+  return `polygon(${P.join(',')})`;
+}
+document.querySelectorAll('.scrap').forEach((el, k) => { el.style.clipPath = tear(k * 53 + 7, { l: 3, r: 3, t: 3, b: 3 }, 9, 9); });
+
+const u = (id, cls) => `<svg class="o ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+function orn(el) {
+  el.insertAdjacentHTML('afterbegin', ['tl', 'tr', 'br', 'bl'].map(c => u('corner', 'c ' + c)).join('') + u('fleuron', 'top') + u('wings', 'bot'));
+}
+orn($('hero'));
+
+const gate = $('gate'), phrase = $('phrase'), enterTxt = $('enter');
+function writePhrase(t, label) {
+  phrase.innerHTML = [...t].map((c, i) => `<span style="animation-delay:${(i * 0.28).toFixed(2)}s">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+  enterTxt.textContent = label;
+  enterTxt.style.animation = 'none'; void enterTxt.offsetWidth;
+  enterTxt.style.animation = ''; enterTxt.style.animationDelay = (t.length * 0.28 + 0.9) + 's';
+}
+writePhrase('Они смотрят', 'войти');
+function enter() {
+  gate.classList.add('out');
+  if (!page.classList.contains('on')) document.body.classList.remove('locked');
+  document.body.classList.add('in');
+  setTimeout(() => gate.classList.add('gone'), 1700);
+  startFigures();
+}
+gate.addEventListener('click', enter);
+$('exit').addEventListener('click', () => {
+  writePhrase('Поздно', 'вернуться');
+  gate.classList.remove('gone'); void gate.offsetWidth; gate.classList.remove('out');
+  document.body.classList.add('locked');
+});
+
+/* Плашки */
+entries.forEach((e, i) => {
+  const li = document.createElement('li'), b = document.createElement('button');
+  b.className = 'card fr'; b.style.setProperty('--k', (i / (entries.length - 1)).toFixed(2));
+  b.innerHTML = `<span class="emb">${roman[i]}</span><b>${esc(e.title)}</b><span class="s">${esc(e.scrawl)}</span>` +
+    `<span class="pills">${e.stats.map(s => `<i><u>${esc(s[0])}</u> ${esc(s[1])}</i>`).join('')}</span>` +
+    `<span class="h">${esc(e.hint)}</span><span class="bar">Читать запись</span>`;
+  orn(b);
+  b.addEventListener('click', () => go(i));
+  li.appendChild(b); cards.appendChild(li);
+});
+
+function setDread() {
+  const d = dread();
+  document.documentElement.style.setProperty('--d', d.toFixed(2));
+  document.body.classList.toggle('deep', d > 0.5);
+  [...cards.querySelectorAll('.card')].forEach((c, j) => { c.classList.toggle('far', j > deepest + 1); c.classList.toggle('seen', seen.has(j)); });
+  count.textContent = seen.size + '/' + entries.length;
+  meter.textContent = seen.size === entries.length ? 'Вы прочли всё. Теперь они знают, как вы читаете.' : '';
+}
+
+/* ===== Рисунки и надписи на листе ===== */
+let uid = 0;
+const wob = (R, pts, j) => pts.map((p, i) => (i ? 'L' : 'M') + (p[0] + (R() - .5) * j).toFixed(1) + ' ' + (p[1] + (R() - .5) * j).toFixed(1)).join('');
+function hair(R, cx, cy, rx, ry, n, j) {
+  let d = '', a = 0;
+  for (let i = 0; i < n; i++) { a += .5 + R() * .9; const k = .55 + R() * (.5 + j); d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rx * k).toFixed(1) + ' ' + (cy + Math.sin(a) * ry * k).toFixed(1); }
+  return d;
+}
+const P = (d, w) => `<path class="dr" pathLength="1" d="${d}" stroke-width="${w || 1.1}"/>`;
+const sv = (vb, inner) => `<svg viewBox="${vb}" aria-hidden="true">${inner}</svg>`;
+const DOODLE = {
+  eyes: R => sv('0 0 200 90', [50, 150].map(cx => P(hair(R, cx, 45, 44, 32, 120, .5), .9) + P(hair(R, cx, 45, 22, 15, 46, .2), 1) +
+    `<circle cx="${cx}" cy="45" r="10" fill="currentColor"/><circle cx="${cx - 3}" cy="42" r="2" fill="#e4e7e4"/>`).join('')),
+  figure: R => {
+    const id = 'c' + (uid++), pts = []; for (let i = 0; i < 150; i++) pts.push([R() * 120, R() * 130]);
+    return sv('0 0 120 130', `<clipPath id="${id}"><circle cx="60" cy="38" r="24"/><path d="M8 130Q12 78 60 70Q108 78 112 130Z"/></clipPath><g clip-path="url(#${id})">${P(wob(R, pts, 0), 1.3)}</g><circle cx="50" cy="38" r="4.5" fill="#e4e7e4"/><circle cx="70" cy="38" r="4.5" fill="#e4e7e4"/>`);
+  },
+  stone: R => sv('0 0 120 100', P(wob(R, [[26, 90], [26, 44], [34, 28], [60, 20], [86, 28], [94, 44], [94, 90]], 3), 1.6) + P(wob(R, [[28, 88], [28, 46], [36, 30], [60, 22], [84, 30], [92, 46], [92, 88]], 3), 1.2) +
+    P(wob(R, [[6, 90], [34, 86], [60, 92], [88, 86], [116, 90]], 3), 1.5) + P(wob(R, [[100, 90], [100, 74], [108, 70], [114, 74], [114, 90]], 2), 1) +
+    '<text x="60" y="62" text-anchor="middle" font-size="19" font-family="Ruslan Display,serif" fill="currentColor" filter="url(#rough)">R.I.P</text>'),
+  tally: R => {
+    let d = ''; const grp = x0 => { for (let i = 0; i < 4; i++) { const x = x0 + i * 9; d += `M${(x + R() * 2).toFixed(1)} ${(6 + R() * 3).toFixed(1)}L${(x + R() * 3 - 1).toFixed(1)} ${(34 + R() * 3).toFixed(1)}`; } d += `M${x0 - 5} ${(28 + R() * 3).toFixed(1)}L${x0 + 38} ${(12 + R() * 3).toFixed(1)}`; };
+    grp(10); grp(62); d += 'M114 7L113 35';
+    return sv('0 0 130 42', P(d, 1.7));
+  },
+  spiral: R => {
+    let d = '', a = 0; for (let i = 0; i < 70; i++) { a += .42; const r = 1.5 + i * .5; d += (i ? 'L' : 'M') + (40 + Math.cos(a) * r + (R() - .5) * 1.6).toFixed(1) + ' ' + (40 + Math.sin(a) * r + (R() - .5) * 1.6).toFixed(1); }
+    return sv('0 0 80 80', P(d, 1.2));
+  }
+};
+const TYPES = ['phrase', 'eyes', 'phrase', 'figure', 'stone', 'phrase', 'tally', 'spiral'];
+const SLOTS = [[{ top: '1.1rem', right: '1%' }, { top: '34%', right: '0' }, { top: '1rem', left: '3.3rem' }], [{ bottom: '1%', right: '3%' }, { bottom: '.5%', left: '11%' }, { bottom: '16%', right: '1%' }]];
+function addDoodles(el, seed, d) {
+  const R = rng(seed * 97 + 13);
+  let n = R() < .5 + d * .4 ? 1 : 0; if (n && R() < .28 + d * .2) n = 2;
+  const gs = R() < .5 ? [SLOTS[0], SLOTS[1]] : [SLOTS[1], SLOTS[0]];
+  for (let k = 0; k < n; k++) {
+    const slot = gs[k][R() * gs[k].length | 0], type = TYPES[(Math.floor(R() * TYPES.length) + seed + k * 3) % TYPES.length];
+    const div = document.createElement('div'); div.className = 'dd ' + (type === 'phrase' ? 'ph' : type);
+    Object.assign(div.style, slot); div.style.setProperty('--r', ((R() - .5) * (type === 'phrase' ? 24 : 14)).toFixed(1) + 'deg');
+    if (type === 'phrase') {
+      let i = 0;
+      div.innerHTML = PHRASES[(Math.floor(R() * PHRASES.length) + seed * 5 + k * 3) % PHRASES.length].split(' ').map(w =>
+        `<b>${[...w].map(c => `<i style="animation-delay:${(1.5 + (i++) * .11).toFixed(2)}s;transform:rotate(${((R() - .5) * 14).toFixed(1)}deg) translateY(${((R() - .5) * 6).toFixed(1)}px) scaleY(${(1 + R() * .25).toFixed(2)})">${esc(c)}</i>`).join('')}</b>`).join(' ');
+    } else div.innerHTML = DOODLE[type](R);
+    el.appendChild(div);
+  }
+}
+
+/* ===== Текст -> слова с пометками (0 обычное, 1 подчёркнуто, 2 зачёркнуто) ===== */
+function tokenize(str) {
+  const out = []; let t = 0;
+  str.split(/([*~])/).forEach(part => {
+    if (part === '*') t = t === 1 ? 0 : 1;
+    else if (part === '~') t = t === 2 ? 0 : 2;
+    else part.split(/\s+/).filter(Boolean).forEach(w => out.push({ w, t }));
+  });
+  return out;
+}
+const JIT = [-1.5, -.8, 0, 0, .8, 1.5];
+function fill(p, toks) {
+  for (let i = 0; i < toks.length;) {
+    const t = toks[i].t;
+    if (t === 0) { /* каждое слово чуть выше или ниже, как в живом почерке */
+      const sp = document.createElement('span'); sp.style.top = JIT[Math.random() * 6 | 0] + 'px';
+      sp.textContent = toks[i].w + (i < toks.length - 1 ? ' ' : ''); p.appendChild(sp); i++; continue;
+    }
+    const ws = []; let j = i;
+    while (j < toks.length && toks[j].t === t) { ws.push(toks[j].w); j++; }
+    const el = document.createElement(t === 1 ? 'mark' : 's');
+    el.className = t === 1 ? 'ab'[Math.random() * 2 | 0] : 'abc'[Math.random() * 3 | 0];
+    el.textContent = ws.join(' ') + (j < toks.length ? ' ' : '');
+    el.style.animationDelay = (-Math.random() * 6).toFixed(1) + 's'; p.appendChild(el); i = j;
+  }
+}
+function mk(b) {
+  let el;
+  if (b.title) { el = document.createElement('h2'); el.textContent = b.title; }
+  else if (b.w) { el = document.createElement('p'); el.className = 'w'; el.textContent = b.w; }
+  else { el = document.createElement('p'); if (b.cont) el.className = 'cont'; fill(el, b.toks); }
+  return el;
+}
+
+/* ===== Разбиение на листы: измеряем настоящие строки в скрытом блоке ===== */
+function paginate(e, W, H) {
+  probe.style.width = W + 'px'; probe.replaceChildren();
+  const res = []; let pg = [];
+  const flush = () => { if (pg.length) res.push(pg); pg = []; probe.replaceChildren(); };
+  const tryAdd = b => { const el = mk(b); probe.appendChild(el); if (probe.offsetHeight <= H) { pg.push(b); return true; } probe.removeChild(el); return false; };
+  const tb = { title: e.title }; probe.appendChild(mk(tb)); pg.push(tb);
+  e.text.forEach(x => {
+    if (typeof x !== 'string') {
+      const b = { w: x.whisper };
+      if (!tryAdd(b)) { flush(); probe.appendChild(mk(b)); pg.push(b); }
+      return;
+    }
+    let toks = tokenize(x), cont = false;
+    while (toks.length) {
+      if (tryAdd({ toks, cont })) break;
+      let lo = 0, hi = toks.length - 1;
+      while (lo < hi) {
+        const mid = Math.ceil((lo + hi) / 2), el = mk({ toks: toks.slice(0, mid), cont });
+        probe.appendChild(el); const ok = probe.offsetHeight <= H; probe.removeChild(el);
+        if (ok) lo = mid; else hi = mid - 1;
+      }
+      if (lo === 0) { if (pg.length) { flush(); continue; } lo = 1; }
+      const b = { toks: toks.slice(0, lo), cont }; probe.appendChild(mk(b)); pg.push(b);
+      flush(); toks = toks.slice(lo); cont = true;
+    }
+  });
+  flush();
+  return res.length ? res : [[{ title: e.title }]];
+}
+
+function layout(first) {
+  if (!page.classList.contains('on') || curEntry < 0) return;
+  const L = parseFloat(getComputedStyle(txt).lineHeight);
+  const top = parseFloat(getComputedStyle(sheet).paddingTop);
+  const H = Math.floor((sheet.clientHeight - top - L * 0.7) / L) * L;
+  if (!(H >= L * 3)) return;
+  txt.style.height = H + 'px';
+  const np = paginate(entries[curEntry], txt.clientWidth, H);
+  const sig = np.map(p => p.map(b => b.toks ? b.toks.length : 1).join(',')).join('|');
+  if (sig === lastSig) return;
+  lastSig = sig; pages = np; cur = Math.min(cur, pages.length - 1);
+  renderSheet(cur, !!first, !first);
+}
+
+function renderSheet(s, anim, quiet) {
+  cur = s; txt.replaceChildren();
+  pages[s].forEach((b, k) => {
+    const el = mk(b);
+    if (!quiet) { el.classList.add('rv'); el.style.animationDelay = Math.min(0.2 + k * 0.35, 2.4).toFixed(2) + 's'; }
+    txt.appendChild(el);
+  });
+  const seed = curEntry * 37 + s * 11 + 5;
+  sheet.style.clipPath = tear(seed, { l: 1.9, r: .7, t: .5, b: .9 });
+  sheet.querySelectorAll('.dd').forEach(n => n.remove());
+  addDoodles(sheet, seed, dread());
+  $('pinfo').textContent = roman[curEntry] + ' · ' + (s + 1) + '/' + pages.length;
+  const last = s === pages.length - 1, nx = $('next');
+  $('prev').disabled = s === 0;
+  nx.textContent = last && curEntry < entries.length - 1 ? 'Дальше ›' : 'Лист ›';
+  nx.disabled = last && curEntry === entries.length - 1;
+  if (anim) { sheetw.classList.remove('flip'); void sheetw.offsetWidth; sheetw.classList.add('flip'); }
+}
+
+/* ===== Навигация по листам и записям ===== */
+function turn(s) { history.replaceState(null, '', '#p' + (curEntry + 1) + '-' + (s + 1)); renderSheet(s, true); }
+function nextSheet() { if (cur < pages.length - 1) turn(cur + 1); else if (curEntry < entries.length - 1) go(curEntry + 1); }
+function prevSheet() { if (cur > 0) turn(cur - 1); }
+function showPage(i, s) {
+  curEntry = i; cur = s; lastSig = '';
+  seen.add(i); deepest = Math.max(deepest, i);
+  $('ptitle').textContent = entries[i].title;
+  page.classList.add('on'); document.body.classList.add('reading');
+  setDread(); layout(true);
+  if (document.fonts) document.fonts.ready.then(() => layout(false));
+  page.focus({ preventScroll: true });
+}
+function hidePage() { page.classList.remove('on'); document.body.classList.remove('reading'); curEntry = -1; }
+function parse() { const m = location.hash.match(/^#p(\d+)(?:-(\d+))?$/); return m && entries[m[1] - 1] ? [m[1] - 1, (+m[2] || 1) - 1] : null; }
+function route() { const r = parse(); if (r) showPage(r[0], r[1]); else hidePage(); }
+function go(i) { history.pushState(null, '', '#p' + (i + 1)); route(); }
+function closePage() { history.pushState(null, '', location.pathname + location.search); route(); }
+
+$('next').addEventListener('click', nextSheet);
+$('prev').addEventListener('click', prevSheet);
+$('back').addEventListener('click', closePage);
+window.addEventListener('popstate', route);
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => layout(false), 200); });
+document.addEventListener('keydown', e => {
+  if (!page.classList.contains('on')) return;
+  if (e.key === 'Escape') closePage(); else if (e.key === 'ArrowRight') nextSheet(); else if (e.key === 'ArrowLeft') prevSheet();
+});
+let sx = 0, sy = 0;
+stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+stage.addEventListener('touchend', e => {
+  const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { if (dx < 0) nextSheet(); else prevSheet(); }
+}, { passive: true });
+
+setDread();
+if (parse()) { enter(); route(); }
+</script>
+</body>
+</html>
