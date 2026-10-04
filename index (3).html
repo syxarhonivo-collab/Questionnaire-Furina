@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Анкета наблюдателя</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Marck+Script&family=Playfair+Display:wght@700;900&family=Ruslan+Display&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --d: .28; /* уровень тревоги: стартует не с нуля и растёт до 1 (меняется ступенями из JS) */
+  --calm: #121416; --deep: #040506; --panel: #0a0b0c;
+  --bone: #d6dadd; --ash: #8c969d; --ice: #a9c0d0;
+  --bg: color-mix(in srgb, var(--calm), var(--deep) calc(var(--d) * 100%));
+  --ink: color-mix(in srgb, var(--bone), var(--ash) calc(var(--d) * 75%));
+  --line: color-mix(in srgb, #596166, #3c454a calc(var(--d) * 100%));
+  --sil: color-mix(in srgb, #b6bcc0, #8aa3b5 calc(var(--d) * 70%));
+  --hand: 'Caveat', 'Segoe Script', cursive;
+  --script: 'Marck Script', 'Segoe Script', cursive;
+  --goth: 'Ruslan Display', 'Playfair Display', Georgia, serif;
+  --black: 'UnifrakturCook', 'Playfair Display', serif;
+  /* ромбовидные обои, как в Версале */
+  --lat: linear-gradient(to top right, transparent calc(50% - .5px), rgba(255,255,255,.07) 50%, transparent calc(50% + .5px)) 0 0/64px 112px,
+         linear-gradient(to bottom right, transparent calc(50% - .5px), rgba(255,255,255,.07) 50%, transparent calc(50% + .5px)) 0 0/64px 112px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+body { margin: 0; background: var(--lat), var(--bg); color: var(--ink); font: 400 1.45rem/1.45 var(--hand); overflow-x: hidden; transition: background-color 1.6s, color 1.6s;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+body.locked, body.reading { overflow: hidden; }
+::selection { background: rgba(140,170,195,.4); color: #fff; }
+main { position: relative; z-index: 2; max-width: 64rem; margin: 0 auto; padding: 0 1.1rem 6rem; }
+
+/* Слои атмосферы: фиксированные, лёгкие (только прозрачность и один градиент) */
+.vig, .grain, .glow { position: fixed; inset: 0; pointer-events: none; }
+.vig { z-index: 200; transform: translateZ(0);
+  background: radial-gradient(ellipse at 50% 45%, transparent calc(50% - var(--d) * 32%), rgba(0,0,0, calc(.62 + var(--d) * .36)) 100%);
+  animation: beat calc(2.8s - var(--d) * 1.5s) infinite; }
+body.deep .vig { animation: beat2 8s infinite; }
+@keyframes beat { 0%,100% { opacity: 1 } 12% { opacity: .82 } 24% { opacity: 1 } 36% { opacity: .9 } }
+@keyframes beat2 { 0%,100% { opacity: 1 } 6% { opacity: .84 } 12% { opacity: 1 } 80% { opacity: 1 } 82% { opacity: .55 } 84% { opacity: .92 } 86% { opacity: .62 } 88% { opacity: 1 } }
+.grain { z-index: 199; opacity: calc(.06 + var(--d) * .08);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.glow { z-index: 0; opacity: calc(.25 + var(--d) * .5); animation: breathe 6s ease-in-out infinite alternate;
+  background: radial-gradient(circle at 10% 90%, rgba(62,84,100,.55) 0, transparent 46%), radial-gradient(circle at 92% 12%, rgba(48,64,78,.5) 0, transparent 42%); }
+@keyframes breathe { to { transform: scale(1.1); } }
+
+/* Орнаменты: символы из спрайта, раскладываются функцией orn() */
+.o { position: absolute; color: var(--sil); fill: none; stroke: currentColor; stroke-width: 1.1; pointer-events: none; overflow: visible; }
+.c { width: 46px; height: 46px; } .sm .c { width: 26px; height: 26px; }
+.tl { top: 6px; left: 6px; } .tr { top: 6px; right: 6px; transform: scaleX(-1); }
+.bl { bottom: 6px; left: 6px; transform: scaleY(-1); } .br { bottom: 6px; right: 6px; transform: scale(-1); }
+.top { top: -13px; left: 50%; width: 84px; height: 26px; margin-left: -42px; background: var(--panel); padding: 0 6px; }
+.top.cross { top: -24px; width: 34px; height: 50px; margin-left: -17px; padding: 3px 2px; }
+.bot { bottom: -14px; left: 50%; width: 120px; height: 30px; margin-left: -60px; background: var(--panel); padding: 0 6px; }
+.wm { left: 50%; top: 50%; width: 150px; height: 188px; margin: -94px 0 0 -75px; opacity: .06; fill: currentColor; stroke: none; }
+.arch { left: 50%; top: 16px; width: 150px; height: 225px; margin-left: -75px; opacity: .1; }
+.chain { top: 8px; width: 14px; height: 70px; opacity: .75; } .chain.l { left: 66px; } .chain.r { right: 66px; }
+.rose { width: 54px; height: 54px; fill: var(--panel); } .r1 { top: -16px; right: -14px; } .r2 { bottom: -16px; left: -14px; }
+.cd { bottom: -2px; width: 20px; height: 50px; } .cd.a { left: calc(50% - 128px); } .cd.b { left: calc(50% + 108px); }
+.fly { width: 34px; height: 26px; opacity: .8; } .f1 { top: 70px; left: 9%; transform: rotate(-14deg); } .f2 { top: 52px; right: 9%; transform: scaleX(-1) rotate(-10deg); }
+.key { display: none; width: 16px; height: 48px; right: 20px; top: 46%; transform: rotate(14deg); }
+@media (min-width: 700px) { .key { display: block; } }
+.fr, .paper { position: relative; }
+.fr { background: var(--panel); border: 1px solid var(--sil);
+  box-shadow: inset 0 0 0 6px var(--panel), inset 0 0 0 7px color-mix(in srgb, var(--sil), transparent 45%), 0 14px 36px rgba(0,0,0,.7); }
+.fr > :not(.o), .paper > :not(.o) { position: relative; }
+
+/* Навигация (без blur: он тормозит прокрутку) */
+nav { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: center; gap: clamp(.8rem, 4vw, 2.2rem);
+  padding: .7rem 1rem; background: rgba(5,6,7,.92); border-bottom: 1px solid var(--line); }
+nav a, nav button { color: inherit; background: none; border: 0; cursor: pointer; text-decoration: none; font: 700 .95rem var(--goth); letter-spacing: .06em; opacity: .8; padding: .2rem; }
+nav a:hover, nav button:hover { opacity: 1; color: var(--ice); }
+:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+#count { font: 400 1.1rem var(--hand); opacity: .75; display: flex; align-items: center; gap: .4rem; }
+#count::before { content: ''; width: .5rem; height: .5rem; border-radius: 50%; background: var(--ice); box-shadow: 0 0 9px var(--ice); animation: pulse calc(3.2s - var(--d) * 2.2s) infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* Шапка */
+header { max-width: 36rem; margin: 3.5rem auto 4.5rem; padding: 3.4rem 2rem 3.6rem; text-align: center; }
+.spark { color: var(--sil); letter-spacing: .5em; font-size: .9rem; }
+h1 { margin: .8rem 0 .2rem; font: 400 clamp(2.3rem, 10vw, 3.6rem)/1.05 var(--goth); color: var(--bone); text-shadow: 0 0 calc(8px + var(--d) * 18px) rgba(130,165,190,.5); }
+.handle { font: 400 1.2rem var(--script); color: #7d8588; }
+.pills { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; margin: 1.2rem 0 .4rem; }
+.pills i { position: relative; font-style: normal; font-size: 1.15rem; padding: .3rem .85rem; border: 1px solid var(--line); border-radius: 12px; }
+.pills i::before, .pills i::after { content: '✦'; position: absolute; top: 50%; transform: translateY(-50%); font-size: .55rem; color: var(--sil); background: var(--panel); padding: 2px 0; }
+.pills i::before { left: -5px; } .pills i::after { right: -5px; }
+.pills u { text-decoration: none; font-weight: 700; color: var(--bone); }
+.lead { margin: 1rem auto 0; max-width: 26rem; font-size: 1.5rem; opacity: .85; }
+.bar { position: relative; display: block; margin: 1.3rem auto 0; width: 100%; max-width: 20rem; padding: .55rem 1rem; text-align: center; text-decoration: none; color: var(--bone);
+  font: 400 1.35rem var(--goth); border: 1px solid var(--sil); border-radius: 14px; box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 4px color-mix(in srgb, var(--sil), transparent 50%); transition: background .3s, color .3s; }
+a.bar:hover, .card:hover .bar { background: rgba(150,175,195,.16); color: #fff; }
+
+/* Плашки */
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 3rem; }
+.cards li:nth-child(odd) { transform: rotate(-.6deg); margin-right: 4%; }
+.cards li:nth-child(even) { transform: rotate(.6deg); margin-left: 4%; }
+.card { --k: 0; width: 100%; display: block; text-align: center; cursor: pointer; font: inherit; color: inherit; padding: 2.7rem 1.3rem 2.5rem; transition: transform .4s, opacity .5s, box-shadow .4s; }
+.emb { display: grid; place-items: center; width: 4rem; height: 4rem; margin: 0 auto .6rem; border-radius: 50%; border: 1px solid var(--sil);
+  box-shadow: inset 0 0 0 4px var(--panel), inset 0 0 0 5px color-mix(in srgb, var(--sil), transparent 50%), 0 0 22px rgba(150,185,210, calc(.05 + var(--k) * .22)); font: 700 1.9rem/1 var(--black); color: var(--bone); }
+.card b { display: block; font: 400 1.75rem/1.1 var(--goth); color: var(--bone); }
+.card .s { display: block; margin-top: .3rem; font: 400 1.2rem var(--script); color: var(--ice); }
+.card .h { display: block; margin: .6rem 0 .2rem; opacity: .75; }
+.card:hover, .card:focus-visible { transform: scale(1.02); box-shadow: inset 0 0 0 6px var(--panel), inset 0 0 0 7px var(--ice), 0 0 40px rgba(150,185,210,.25); }
+.card.far { opacity: .55; }
+.card.seen .emb { border-style: dashed; }
+@media (min-width: 760px) {
+  .cards { grid-template-columns: 1fr 1fr; gap: 3.2rem 2.4rem; }
+  .cards li { margin: 0 !important; }
+  .cards li:nth-child(even) { margin-top: 3.4rem !important; }
+}
+
+/* Отдельная страница чтения */
+.page { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  background: var(--lat), var(--bg); opacity: 0; visibility: hidden; transition: opacity .9s, visibility 0s .9s; -webkit-user-select: text; user-select: text; }
+.page.on { opacity: 1; visibility: visible; transition: opacity .9s; }
+.pbar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; background: rgba(5,6,7,.94); border-bottom: 1px solid var(--line); }
+#pnum { font: 700 1.5rem var(--black); color: var(--bone); }
+.btn { background: none; color: var(--bone); font: 700 1.2rem var(--hand); cursor: pointer; border: 1px solid var(--line); padding: .3rem 1.2rem; border-radius: 10px; transition: .3s; }
+.btn:hover { background: rgba(150,175,195,.16); border-color: var(--ice); }
+.paper { --paper: color-mix(in srgb, #c8cbc7, #6b7377 calc(var(--d) * 65%)); --panel: var(--paper); --sil: #2b3338; --ink2: #10151a;
+  max-width: 40rem; margin: 2.8rem auto 2.4rem; padding: 3.8rem 1.8rem 4.2rem; color: var(--ink2); background: var(--paper); border: 1px solid #232a2f;
+  box-shadow: inset 0 0 0 6px var(--paper), inset 0 0 0 7px #2b3338, 0 20px 50px rgba(0,0,0,.85); font-size: 1.6rem; line-height: 1.5; }
+.paper::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 42%, rgba(12,18,24,.5) 100%); }
+.paper > :not(.o) { z-index: 1; }
+.paper .arch, .paper .wm { opacity: .08; }
+.paper h2 { margin: .3rem 0 .4rem; font: 400 2.1rem/1.1 var(--goth); text-align: center; }
+.div { position: relative; display: block; width: 110px; height: 30px; margin: 0 auto 1.2rem; color: #2b3338; fill: none; stroke: currentColor; stroke-width: 1.1; }
+.paper p { margin: 0 0 1rem; }
+.paper p:nth-of-type(even) { margin-left: 1rem; }
+.dc::first-letter { float: left; font: 400 3.3rem/1 var(--goth); padding: .1rem .45rem .2rem; margin: .25rem .55rem 0 0; border: 1px solid #2b3338; background: rgba(0,0,0,.07); }
+mark { background: linear-gradient(transparent 58%, rgba(40,62,78,.32) 58% 86%, transparent 86%); color: inherit; }
+.whisper { font: 400 1.8rem/1.3 var(--script); color: #1b2d3a; }
+.rv { opacity: 0; animation: fade 1.9s ease forwards; }
+.whisper.rv { animation: fade 1.9s ease forwards, shiver 4s 3s infinite; }
+@keyframes fade { to { opacity: 1; } }
+@keyframes shiver { 0%,100% { filter: blur(0); } 50% { filter: blur(1.1px); } }
+.pnav { display: flex; gap: .8rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0 0; }
+.paper .btn { color: var(--ink2); border-color: #2b3338; }
+.paper .btn:hover { background: rgba(20,40,55,.12); border-color: #10151a; }
+.pend { height: 2.5rem; }
+
+/* Заметки */
+#notes { margin-top: 6.5rem; }
+#notes h2 { font: 400 2.2rem var(--goth); text-align: center; margin: 0 0 2rem; color: var(--bone); }
+.scraps { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.9rem; }
+.scrap { margin: 0; max-width: 15rem; padding: 1.5rem 1.4rem; background: var(--panel); border: 1px solid var(--line); box-shadow: inset 0 0 0 4px var(--panel), inset 0 0 0 5px color-mix(in srgb, var(--line), transparent 40%), 0 10px 24px rgba(0,0,0,.6); }
+.scrap:nth-child(1) { transform: rotate(-3deg); } .scrap:nth-child(2) { transform: rotate(2deg) translateY(1.2rem); } .scrap:nth-child(3) { transform: rotate(-1.5deg); }
+.scrap.i { color: var(--ice); font-family: var(--script); }
+.meter { margin: 4rem 0 0; text-align: center; opacity: .5; }
+
+/* Заставка: буквы проступают по одной */
+.gate { position: fixed; inset: 0; z-index: 100; border: 0; width: 100%; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+  background: radial-gradient(circle at 50% 50%, rgba(16,22,28,.9) 0, rgba(0,0,0,.97) 70%), var(--lat), #000; color: var(--bone); transition: opacity 1.6s;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.gate.out { opacity: 0; pointer-events: none; }
+.gate.gone { display: none; }
+.phrase { display: block; padding: .3em .4em; text-align: center; white-space: nowrap; font: 400 clamp(2.6rem, 13vw, 7rem)/1.5 var(--script); }
+.phrase span { opacity: 0; animation: ink .8s ease-out forwards; }
+@keyframes ink { 0% { opacity: 0; text-shadow: 0 0 0 transparent; } 55% { opacity: 1; text-shadow: 0 0 40px rgba(170,205,230,.95); } 100% { opacity: 1; text-shadow: 0 0 18px rgba(140,175,200,.55); } }
+.enter { font: 400 1.5rem var(--hand); letter-spacing: .15em; opacity: 0; animation: show 2s forwards; }
+@keyframes show { to { opacity: .6; } }
+body.in main { animation: fade2 2.2s ease both; }
+@keyframes fade2 { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .phrase span, .enter, .rv { animation: none; opacity: 1; }
+  .vig, body.deep .vig, .glow, body.in main, #count::before, .whisper.rv { animation: none; }
+  .page, .page.on { transition: none; }
+}
+</style>
+</head>
+<body class="locked">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="corner" viewBox="0 0 60 60"><path d="M8 54V20Q8 8 20 8H54M14 14Q27 14 27 25Q27 33 19 31Q14 29 17 25M30 8Q37 15 46 8M8 30Q15 37 8 46"/><path d="M7 2L12 7L7 12L2 7Z" fill="currentColor"/></symbol>
+  <symbol id="fleuron" viewBox="0 0 120 36"><path d="M44 18H22Q12 18 7 9M76 18H98Q108 18 113 9"/><path d="M60 3L64 15L76 18L64 21L60 33L56 21L44 18L56 15Z" fill="currentColor"/></symbol>
+  <symbol id="wings" viewBox="0 0 160 40"><path d="M74 20Q60 6 36 10Q44 14 40 20Q30 16 22 22Q32 24 30 30Q22 28 14 36Q50 38 74 22M86 20Q100 6 124 10Q116 14 120 20Q130 16 138 22Q128 24 130 30Q138 28 146 36Q110 38 86 22"/><path d="M80 6L86 20L80 34L74 20Z" fill="currentColor"/></symbol>
+  <symbol id="rose" viewBox="0 0 40 40"><path d="M6 31Q10 23 17 28Q12 33 6 31ZM34 31Q30 23 23 28Q28 33 34 31Z"/><path d="M20 6Q32 6 33 18Q34 31 20 33Q6 32 6 20Q6 8 20 6Z"/><path d="M20 12Q28 12 28 20Q28 28 20 28Q12 28 12 20Q12 14 20 12Z"/><path d="M20 17Q25 17 25 20Q25 25 20 24Q16 23 16 20"/></symbol>
+  <symbol id="cross" viewBox="0 0 40 60"><path d="M20 8V54M6 22H34"/><path d="M20 1L23 5L20 9L17 5ZM20 53L23 57L20 61L17 57ZM3 22L7 19L11 22L7 25ZM29 22L33 19L37 22L33 25Z" fill="currentColor"/><circle cx="20" cy="22" r="3.5"/></symbol>
+  <symbol id="key" viewBox="0 0 24 70"><path d="M12 12C5 4 -1 14 12 24C25 14 19 4 12 12Z"/><path d="M12 24V64M12 50H20M12 58H17"/></symbol>
+  <symbol id="candle" viewBox="0 0 20 50"><path d="M10 1Q15 9 10 15Q5 9 10 1Z" fill="currentColor"/><path d="M10 15V19"/><path d="M5 19H15V44H5Z" style="fill:var(--panel)"/><path d="M2 44H18V48H2Z" style="fill:var(--panel)"/><path d="M5 27Q8 31 5 35"/></symbol>
+  <symbol id="fdl" viewBox="0 0 40 50"><path d="M20 2Q29 14 20 28Q11 14 20 2ZM18 22Q3 11 5 28Q8 35 17 31ZM22 22Q37 11 35 28Q32 35 23 31ZM11 32H29V36H11ZM20 36V47M13 47Q20 40 27 47"/></symbol>
+  <symbol id="arch" viewBox="0 0 60 90"><path d="M5 88V36Q5 8 30 2Q55 8 55 36V88Z"/><path d="M30 8V88M15 88V42Q15 26 30 16M45 88V42Q45 26 30 16M5 62H55"/><circle cx="30" cy="34" r="6"/></symbol>
+  <symbol id="chain" viewBox="0 0 20 80"><ellipse cx="10" cy="9" rx="6" ry="9"/><ellipse cx="10" cy="26" rx="2.5" ry="9"/><ellipse cx="10" cy="43" rx="6" ry="9"/><ellipse cx="10" cy="60" rx="2.5" ry="9"/><ellipse cx="10" cy="77" rx="6" ry="9"/></symbol>
+  <symbol id="fly" viewBox="0 0 40 30"><path d="M20 15Q8 -2 2 8Q0 18 14 18Q6 24 12 28Q18 28 20 18M20 15Q32 -2 38 8Q40 18 26 18Q34 24 28 28Q22 28 20 18M20 10V26"/></symbol>
+</svg>
+
+<div class="glow"></div><div class="grain"></div><div class="vig"></div>
+
+<button class="gate" id="gate" aria-label="Войти на страницу">
+  <span class="phrase" id="phrase" aria-hidden="true"></span>
+  <span class="enter" id="enter">войти</span>
+</button>
+
+<nav>
+  <a href="#top">Начало</a>
+  <a href="#cards">Записи</a>
+  <a href="#notes">Заметки</a>
+  <button id="exit" type="button">Выйти</button>
+  <span id="count" aria-label="Прочитано">0/6</span>
+</nav>
+
+<main id="top">
+  <header class="fr" id="hero">
+    <div class="spark" aria-hidden="true">✦ ✦ ✦</div>
+    <h1>Анкета наблюдателя</h1>
+    <div class="handle">@они_смотрят</div>
+    <div class="pills"><i><u>6</u> записей</i><i><u>0</u> выходов</i><i><u>1</u> гость</i></div>
+    <p class="lead">Вы уже заполняли эту анкету. Ответы сохранились. Читайте по порядку и не оборачивайтесь.</p>
+    <a class="bar" href="#cards">Начать читать</a>
+  </header>
+
+  <ul class="cards" id="cards"></ul>
+
+  <section id="notes">
+    <h2>Чужие заметки</h2>
+    <div class="scraps">
+      <p class="scrap fr sm">Не считайте ступени. Я считал и перестал.</p>
+      <p class="scrap fr sm i">Дверь вела обратно в прихожую. Все четыре раза.</p>
+      <p class="scrap fr sm">Если услышите своё имя, не отвечайте.</p>
+    </div>
+  </section>
+  <p class="meter" id="meter"></p>
+</main>
+
+<!-- Отдельная страница чтения -->
+<div class="page" id="page" tabindex="-1" aria-live="polite">
+  <div class="pbar"><button class="btn" id="back" type="button">‹ К записям</button><span id="pnum"></span></div>
+  <div id="pbody"></div>
+</div>
+
+<script>
+/* ===== ТЕКСТЫ: меняйте здесь =====
+   stats — три «пилюли» на плашке: [число, подпись]
+   *слово* — выделение маркером; { whisper: '...' } — дрожащая строка */
+const entries = [
+  { title: 'Прибытие', hint: 'Дом на Заречной, 14', scrawl: 'дверь была открыта',
+    stats: [['14', 'дом'], ['1', 'гость'], ['0', 'выходов']],
+    text: ['Вы приехали в четверг, около шести. Ключ лежал под *третьим кирпичом* слева от крыльца.',
+           'В доме было тепло. Это странно: печь не топили с осени.'] },
+  { title: 'Соседи', hint: 'Они вежливы', scrawl: 'она смотрит в коридор',
+    stats: [['1', 'банка'], ['1', 'взгляд'], ['0', 'слов']],
+    text: ['Соседка слева приходит с банкой варенья. Она не заходит и смотрит поверх вашего плеча.',
+           'Она спрашивает: «Вы уже слышали, как *он ходит*?» Вы отвечаете, что живёте один.',
+           'Она кивает, как будто это и есть ответ.'] },
+  { title: 'Первая ночь', hint: 'Запишите, что услышали', scrawl: 'их было одиннадцать',
+    stats: [['2', 'часа ночи'], ['11', 'шагов'], ['10', 'ступеней']],
+    text: ['В два часа ночи заскрипела лестница. Ступени считают шаги, а не вес.',
+           'Вы насчитали *одиннадцать*. В доме всего десять ступеней.',
+           { whisper: 'Одиннадцатая — для того, кто идёт следом.' }] },
+  { title: 'Подвал', hint: 'Дверь не была заперта', scrawl: 'внизу кто-то дышит',
+    stats: [['1', 'дверь'], ['9', 'отметок'], ['0', 'света']],
+    text: ['Дверь в подвал открыта, хотя вы закрывали её дважды. Внизу пахнет сырой землёй и воском.',
+           'На стене отметки. Это не календарь, это *рост*: от колена до самого потолка, и каждая выше предыдущей.',
+           { whisper: 'Последняя отметка сделана сегодня.' }] },
+  { title: 'Зеркало', hint: 'Не смотрите слишком долго', scrawl: 'оно не моргает',
+    stats: [['1', 'зеркало'], ['0.3', 'секунды'], ['2', 'вас']],
+    text: ['В прихожей висит зеркало в тёмной раме. Вы повесили его сами, но не помните, когда.',
+           'Отражение запаздывает на долю вдоха. Потом вы замечаете, что оно перестало повторять и начало *ждать*.',
+           { whisper: 'Оно ждёт, когда вы отвернётесь.' }] },
+  { title: 'Вы', hint: 'Последняя запись анкеты', scrawl: 'оглянись',
+    stats: [['6', 'из 6'], ['1', 'наблюдатель'], ['∞', 'осталось']],
+    text: ['Вы дочитали до конца. Хорошо. Он тоже следил за вами *по строчкам*.',
+           'В графе «наблюдатель» стоит ваше имя. Чернила ещё не высохли.',
+           { whisper: 'Не оборачивайтесь. Просто закройте страницу. Он уже закрыл дверь.' }] }
+];
+const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const cards = $('cards'), meter = $('meter'), count = $('count'), page = $('page'), pbody = $('pbody');
+const seen = new Set(); let deepest = -1;
+
+/* Орнаменты: углы, верх, низ + (o.wm) лилия-водяной знак + (o.full) полный набор */
+const u = (id, cls) => `<svg class="o ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+function orn(el, o = {}) {
+  let h = (o.wm ? u('fdl', 'wm') : '') + (o.full ? u('arch', 'arch') : '');
+  h += ['tl', 'tr', 'br', 'bl'].map(c => u('corner', 'c ' + c)).join('');
+  if (!o.sm) h += o.full ? u('cross', 'top cross') : u('fleuron', 'top');
+  if (!o.sm) h += u('wings', 'bot');
+  if (o.full) h += u('chain', 'chain l') + u('chain', 'chain r') + u('rose', 'rose r1') + u('rose', 'rose r2') +
+    u('candle', 'cd a') + u('candle', 'cd b') + u('fly', 'fly f1') + u('fly', 'fly f2') + u('key', 'key');
+  el.insertAdjacentHTML('afterbegin', h);
+}
+orn($('hero'), { full: true, wm: true });
+document.querySelectorAll('.scrap').forEach(s => orn(s, { sm: true, wm: true }));
+
+/* Заставка */
+const gate = $('gate'), phrase = $('phrase'), enterTxt = $('enter');
+function writePhrase(t, label) {
+  phrase.innerHTML = [...t].map((c, i) => `<span style="animation-delay:${(i * 0.28).toFixed(2)}s">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+  enterTxt.textContent = label;
+  enterTxt.style.animation = 'none'; void enterTxt.offsetWidth;
+  enterTxt.style.animation = ''; enterTxt.style.animationDelay = (t.length * 0.28 + 0.9) + 's';
+}
+writePhrase('Они смотрят', 'войти');
+function enter() {
+  gate.classList.add('out');
+  if (!page.classList.contains('on')) document.body.classList.remove('locked');
+  document.body.classList.add('in');
+  setTimeout(() => gate.classList.add('gone'), 1700);
+}
+gate.addEventListener('click', enter);
+$('exit').addEventListener('click', () => {
+  writePhrase('Поздно', 'вернуться');
+  gate.classList.remove('gone'); void gate.offsetWidth; gate.classList.remove('out');
+  document.body.classList.add('locked');
+});
+
+/* Плашки */
+entries.forEach((e, i) => {
+  const li = document.createElement('li'), b = document.createElement('button');
+  b.className = 'card fr'; b.style.setProperty('--k', (i / (entries.length - 1)).toFixed(2));
+  b.innerHTML = `<span class="emb">${roman[i]}</span><b>${esc(e.title)}</b><span class="s">${esc(e.scrawl)}</span>` +
+    `<span class="pills">${e.stats.map(s => `<i><u>${esc(s[0])}</u> ${esc(s[1])}</i>`).join('')}</span>` +
+    `<span class="h">${esc(e.hint)}</span><span class="bar">Читать запись</span>`;
+  orn(b, { wm: true });
+  b.addEventListener('click', () => go(i));
+  li.appendChild(b); cards.appendChild(li);
+});
+
+function setDread() {
+  const d = 0.28 + 0.72 * ((deepest + 1) / entries.length);
+  document.documentElement.style.setProperty('--d', d.toFixed(2));
+  document.body.classList.toggle('deep', d > 0.5);
+  [...cards.querySelectorAll('.card')].forEach((c, j) => { c.classList.toggle('far', j > deepest + 1); c.classList.toggle('seen', seen.has(j)); });
+  count.textContent = seen.size + '/' + entries.length;
+  meter.textContent = seen.size === entries.length ? 'Вы прочли всё. Теперь они знают, как вы читаете.' : '';
+}
+
+function line(text, cls) { // *слово* -> <mark>
+  const p = document.createElement('p'); p.className = cls;
+  text.split('*').forEach((part, k) => {
+    if (k % 2) { const m = document.createElement('mark'); m.textContent = part; p.appendChild(m); }
+    else p.appendChild(document.createTextNode(part));
+  });
+  return p;
+}
+
+/* Страница чтения: плавное появление, абзацы проступают по очереди */
+function showPage(i) {
+  const e = entries[i];
+  seen.add(i); deepest = Math.max(deepest, i);
+  const art = document.createElement('article'); art.className = 'paper';
+  orn(art, { full: true, wm: true });
+  const h = document.createElement('h2'); h.textContent = e.title; h.className = 'rv'; h.style.animationDelay = '.5s'; art.appendChild(h);
+  art.insertAdjacentHTML('beforeend', '<svg class="div rv" style="animation-delay:.9s" aria-hidden="true"><use href="#fleuron"/></svg>');
+  let t = 1.4;
+  e.text.forEach((x, k) => {
+    let p;
+    if (typeof x === 'string') p = line(x, 'rv' + (k === 0 ? ' dc' : ''));
+    else { p = document.createElement('p'); p.className = 'whisper rv'; p.textContent = x.whisper; t += 0.8; }
+    p.style.animationDelay = t.toFixed(1) + 's'; t += 1.1; art.appendChild(p);
+  });
+  const nav = document.createElement('div'); nav.className = 'pnav rv'; nav.style.animationDelay = (t + 0.3).toFixed(1) + 's';
+  if (i > 0) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = '‹ Назад'; b.onclick = () => go(i - 1); nav.appendChild(b); }
+  if (i < entries.length - 1) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Дальше ›'; b.onclick = () => go(i + 1); nav.appendChild(b); }
+  const back = document.createElement('button'); back.className = 'btn'; back.textContent = 'К записям'; back.onclick = closePage; nav.appendChild(back);
+  art.appendChild(nav);
+  pbody.replaceChildren(art);
+  $('pnum').textContent = roman[i];
+  page.scrollTop = 0;
+  page.classList.add('on'); document.body.classList.add('reading');
+  setDread();
+  page.focus({ preventScroll: true });
+}
+function hidePage() { page.classList.remove('on'); document.body.classList.remove('reading'); }
+function route() {
+  const m = location.hash.match(/^#p(\d+)$/);
+  if (m && entries[m[1] - 1]) showPage(m[1] - 1); else hidePage();
+}
+function go(i) { history.pushState(null, '', '#p' + (i + 1)); route(); }
+function closePage() { history.pushState(null, '', location.pathname + location.search); route(); }
+$('back').addEventListener('click', closePage);
+window.addEventListener('popstate', route);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && page.classList.contains('on')) closePage(); });
+
+setDread();
+if (/^#p\d+$/.test(location.hash)) { enter(); route(); }
+</script>
+</body>
+</html>
